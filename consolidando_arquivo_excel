@@ -1,0 +1,77 @@
+Sub ConsolidarArquivosDinamicamente()
+    Dim PastaOrigem As String
+    Dim PastaDestino As String
+    Dim ArquivoConsolidado As Workbook
+    Dim ArquivoAtual As String
+    Dim PlanilhaConsolidada As Worksheet
+    Dim PlanilhaAtual As Worksheet
+    Dim Coluna As Integer
+    Dim Linha As Long
+    Dim UltimaLinha As Long
+    
+    ' Indicar em qual pasta estão os arquivos de entrada
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Selecione a pasta de origem dos arquivos"
+        If .Show = -1 Then
+            PastaOrigem = .SelectedItems(1)
+        Else
+            Exit Sub
+        End If
+    End With
+    
+    ' ' Indicar em qual pasta estão os arquivos de saída
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Selecione a pasta de destino para salvar o arquivo consolidado"
+        If .Show = -1 Then
+            PastaDestino = .SelectedItems(1)
+        Else
+            Exit Sub
+        End If
+    End With
+    
+    ' Crie um novo arquivo consolidado
+    Set ArquivoConsolidado = Workbooks.Add
+    Set PlanilhaConsolidada = ArquivoConsolidado.Sheets(1)
+    
+    ' Etapa para definir as colunas do consolidado.
+    ' Deixei apenas a estrutura aqui para que possam reproduzir. Caso seu arquivo tenha mais colunas, basta incluir seguindo o mesmo padrão.
+    PlanilhaConsolidada.Cells(1, 1).Value = "Título Coluna 01"
+    PlanilhaConsolidada.Cells(1, 2).Value = "Título Coluna 02"    
+
+    ' Inicialize a variável de linha na planilha consolidada
+    Linha = 2
+    
+    ' Percorra todos os arquivos XLSX na pasta de origem
+    ArquivoAtual = Dir(PastaOrigem & "\*.xlsx")
+    
+    Do While ArquivoAtual <> ""
+        ' Abra o arquivo atual
+        Workbooks.Open PastaOrigem & "\" & ArquivoAtual
+        
+        ' Defina a planilha atual do arquivo aberto
+        Set PlanilhaAtual = ActiveSheet
+        
+        ' Encontre a última linha na planilha atual
+        UltimaLinha = PlanilhaAtual.Cells(Rows.Count, 1).End(xlUp).Row
+        
+        ' Copie os dados da planilha atual para a planilha consolidada
+        For Coluna = 1 To 10 ' Ajuste o número de colunas conforme necessário
+            PlanilhaAtual.Range(PlanilhaAtual.Cells(2, Coluna), PlanilhaAtual.Cells(UltimaLinha, Coluna)).Copy PlanilhaConsolidada.Cells(Linha, Coluna)
+        Next Coluna
+        
+        ' Feche o arquivo atual sem salvar
+        Workbooks(ArquivoAtual).Close SaveChanges:=False
+        
+        ' Atualize a variável de linha na planilha consolidada
+        Linha = Linha + UltimaLinha - 1
+        
+        ' Obtenha o próximo arquivo na pasta de origem
+        ArquivoAtual = Dir
+    Loop
+    
+    ' Salve o arquivo consolidado na pasta de destino
+    ArquivoConsolidado.SaveAs PastaDestino & "\Consolidado.xlsx"
+    ArquivoConsolidado.Close SaveChanges:=False
+    
+    MsgBox "Automação concluída e arquivo salvo em " & PastaDestino
+End Sub
